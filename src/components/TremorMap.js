@@ -2,9 +2,9 @@ import React from "react";
 import Plot from 'react-plotly.js';
 import Select from 'react-select';
 import TextField from '@mui/material/TextField';
-import AdapterDateFns from '@mui/lab/AdapterDateFns';
-import MobileDatePicker from '@mui/lab/MobileDatePicker';
-import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import Chip from '@mui/material/Chip';
 import Autocomplete from '@mui/material/Autocomplete';
 import "react-datepicker/dist/react-datepicker.css";
@@ -214,7 +214,7 @@ export default class tremorMap extends React.Component {
                             )}
                         />
                     </Col>
-		    <Col lg={4}>
+		            <Col lg={2}>
                             <LocalizationProvider dateAdapter={AdapterDateFns}>
                                 <MobileDatePicker
                                     label="Start Date"
@@ -225,6 +225,8 @@ export default class tremorMap extends React.Component {
                                 >
                                 </MobileDatePicker>
                             </LocalizationProvider>
+                    </Col>
+                    <Col lg={2}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <MobileDatePicker
                                 label="End Date"
@@ -235,7 +237,6 @@ export default class tremorMap extends React.Component {
                             >
                             </MobileDatePicker>
                         </LocalizationProvider>
-
                     </Col>
                 </Row>
                 <Row>
