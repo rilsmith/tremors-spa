@@ -1,10 +1,10 @@
 import './App.css';
-import TremorMap from './components/TremorMap';
 
-function App() {
+
+function App({ children }) {
   return (
     <div className="App">
-      <TremorMap/>
+      App
     </div>
   );
 }

@@ -1,7 +1,12 @@
 import React from "react";
 import Plot from 'react-plotly.js';
 import Select from 'react-select';
-import DatePicker from 'react-datepicker';
+import TextField from '@mui/material/TextField';
+import AdapterDateFns from '@mui/lab/AdapterDateFns';
+import MobileDatePicker from '@mui/lab/MobileDatePicker';
+import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import Chip from '@mui/material/Chip';
+import Autocomplete from '@mui/material/Autocomplete';
 import "react-datepicker/dist/react-datepicker.css";
 import { Col, Container, Row } from "react-bootstrap";
 import axios from 'axios';
@@ -14,51 +19,41 @@ export default class tremorMap extends React.Component {
         
         this.coordinates = require('../static/states.json');
 
-
-        /*
-        var latitudes = []
-        var longitudes = []
-        var magnitudes = []
-        var hovertexts = []
-
-        var data = [{
-            type: 'scattergeo',
-            locationmode: 'USA-states',
-            lat: latitudes,
-            lon: longitudes,
-            hoverinfo: 'text',
-            text: hovertexts,
-            marker: {
-                size: magnitudes.map(function(x) { return x * 2 })
-            }
-        }]
-        */
         var layout = {
+		margin: {l: 0, r: 0, b: 0, t: 0},
             title: 'Earthquakes',
             showlegend: false,
             geo: {
-                scope: 'usa',
-                projection: {
-                    type: 'albers usa'
-                },
+		    projection: {type: 'albers usa' },
+		   // {
+			
+ 	           // type: 'miller'
+                   // },
                 showland: true,
                 landcolor: 'rgb(217, 217, 217)',
                 subunitwidth: 1,
                 countrywidth: 1,
                 subunitcolor: 'rgb(255,255,255)',
-                countrycolor: 'rgb(255,255,255)'
-            }
+                countrycolor: 'rgb(255,255,255)',
+		    resolution: 50
+            },
+	//	longaxis: { showgrid: false },
+	//	lataxis: { showgrid: false },
         }
+
+	var start = parseISO(new Date().toISOString().slice(0,10) + ' 00:00:00')
+	var end = parseISO(new Date().toISOString().slice(0,10) + ' 23:59:59')
 
         this.state = {
             num: 0,
-            start: parseISO(new Date().toISOString().slice(0,10) + ' 00:00:00'),
-            end: parseISO(new Date().toISOString().slice(0,10) + ' 23:59:59'),
+            start: start,
+            end: end,
             selectedStates: [],
             //data: data, 
             layout: layout, 
             frames: [], 
-            config: {}
+            config: {},
+	    magLineLayout: {title: 'Magnitude Over Time', xaxis: {showgrid: false, showline: false, zeroline: false, type: 'date', range: [start, end]}, yaxis: {showgrid: false, showline: false, zeroline: false}}
         };
     }
 
@@ -74,6 +69,8 @@ export default class tremorMap extends React.Component {
         var longitudes = []
         var magnitudes = []
         var hovertexts = []
+	var times = []
+
         var params = { 
             'eventtype': 'earthquake',
             'starttime': this.state.start.toISOString().slice(0,10),
@@ -81,7 +78,9 @@ export default class tremorMap extends React.Component {
         }
     
         let selections = this.state.selectedStates
+	console.log(coords)
         for (var selection of selections) {
+            console.log(selection)
             params['minlatitude'] = coords[selection.value].min_lat
             params['maxlatitude'] = coords[selection.value].max_lat
             params['minlongitude'] = coords[selection.value].min_lng
@@ -91,10 +90,12 @@ export default class tremorMap extends React.Component {
             var url = `${baseUrl}?${queryString}`;
 
             await axios.get(url).then(response => {
-                //const response = require('../static/test.json');
                 const features = response.data['features'];
                 
                 for ( var i = 0; i < features.length; i++) {
+		    var time = features[i]['properties']['time']
+		    times.push(new Date(time))
+
                     var mag = features[i]['properties']['mag']
                     magnitudes.push(Math.abs(mag))
                     
@@ -121,10 +122,18 @@ export default class tremorMap extends React.Component {
                 size: magnitudes.map(function(x) { return x * 2 })
             }
         }]
+	var magLine = [{
+	    type: "scatter",
+	    mode: "lines",
+            name: "Magnitude",
+	    x: times,
+	    y: magnitudes
+	}]
 
         this.setState({
             num: this.state.num + 1,
-            data: data
+            data: data,
+	    magLine: magLine
         })
     }
 
@@ -138,8 +147,14 @@ export default class tremorMap extends React.Component {
         return arr
     }
 
-    onDropdownChange = inputValue => {
-        //console.log(inputValue)
+    onDropdownChange = (event, inputValue) => {
+        console.log(inputValue)
+        
+	const arr = this.state.selectedStates
+	const index = arr.findIndex(object => object.label === inputValue.label)
+	if (index === -1) {
+		arr.push(inputValue)
+	}
 
         this.setState({
                 selectedStates: inputValue
@@ -149,49 +164,78 @@ export default class tremorMap extends React.Component {
     }
 
     handleStartChange = date => {
-        let utc = new Date(date.toUTCString())
-        let utcStr = utc.toISOString().slice(0,10) + ' 00:00:00'
+        if (date) {
+            let utc = new Date(date.toUTCString())
+            let utcStr = utc.toISOString().slice(0,10) + ' 00:00:00'
 
-        this.setState({
-                start: parseISO(utcStr)
-            },
-            this.getEarthquakeData
-        )
+
+            console.log(parseISO(utcStr))
+	    this.state.magLineLayout.xaxis.range[0] = parseISO(utcStr)
+
+            this.setState({
+                    start: parseISO(utcStr)
+                },
+                this.getEarthquakeData
+            )
+        }
     }
 
     handleEndChange = date => {
-        let utc = new Date(date.toUTCString())
-        let utcStr = utc.toISOString().slice(0,10) + ' 23:59:59'
+        if (date) {
+            let utc = new Date(date.toUTCString())
+            let utcStr = utc.toISOString().slice(0,10) + ' 23:59:59'
 
-        this.setState(
-            {
-                end: parseISO(utcStr)
-            },
-            this.getEarthquakeData
-        )
+            this.state.magLineLayout.xaxis.range[1] = parseISO(utcStr)
+            this.setState(
+                {
+                    end: parseISO(utcStr)
+                },
+                this.getEarthquakeData
+            )
+            }
     }
 
     render() {
         return (
-            <Container>
-                <Row>
-                    <Col>
-                        <Select
-                            isMulti
+            <Container fluid>
+                <Row className="align-items-center" float="center">
+                    <Col lg={3}>
+                        <Autocomplete
+                            multiple
+                            id="states-standard-tags"
                             options={this.dropdownOptions()}
                             onChange={this.onDropdownChange}
-                        ></Select>
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    variant="standard"
+                                    label="U.S. States"
+                                />
+                            )}
+                        />
                     </Col>
-                    <Col>
-                        <Select>
+		    <Col lg={4}>
+                            <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                <MobileDatePicker
+                                    label="Start Date"
+                                    inputFormat="yyyy-MM-dd"
+                                    value={this.state.start}
+                                    onChange={this.handleStartChange}
+                                    renderInput={(params) => <TextField {...params} />}
+                                >
+                                </MobileDatePicker>
+                            </LocalizationProvider>
+                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                            <MobileDatePicker
+                                label="End Date"
+                                inputFormat="yyyy-MM-dd"
+                                value={this.state.end}
+                                onChange={this.handleEndChange}
+                                renderInput={(params) => <TextField {...params} />}
+                            >
+                            </MobileDatePicker>
+                        </LocalizationProvider>
 
-                        </Select>
-                    </Col>
-                    <Col>
-                        <DatePicker selected={this.state.start} onChange={this.handleStartChange} />
-                    </Col>
-                    <Col>
-                        <DatePicker selected={this.state.end} onChange={this.handleEndChange} />
                     </Col>
                 </Row>
                 <Row>
@@ -205,6 +249,12 @@ export default class tremorMap extends React.Component {
                         onUpdate={(figure) => this.setState(figure)}
                     />
                 </Row>
+		<Row>
+		  <Plot
+		    data={this.state.magLine}
+		    layout={this.state.magLineLayout}
+		  />
+		</Row>
             </Container>
         )
     }

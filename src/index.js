@@ -4,11 +4,24 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import Header from './components/Navigation'
+import TremorMap from './components/TremorMap'
+import About from './components/About'
+
 
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <Router>
+      <Header/>
+	<br/>
+      <Routes>
+        <Route exact path="/" element={<App/>} />
+        <Route path="/dashboard" element={<TremorMap/>} />
+        <Route path="/about" element={<About/>} />
+      </Routes>
+    </Router>
   </React.StrictMode>,
   document.getElementById('root')
 );
