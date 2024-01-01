@@ -1,4 +1,4 @@
-[200~runtime: nodejs12
+runtime: nodejs12
 instance_class: F1
 handlers:
 # Serve all static files with url ending with a file extension
@@ -6,8 +6,8 @@ handlers:
   static_files: build/\1
   upload: build/(.*\..+)$
 # Catch all handler to index.html
--url: /.*
+- url: /.*
   static_files: build/index.html
   secure: always
   redirect_http_response_code: 301
-  script: auto~
+  upload: build/(.*\..+)$
